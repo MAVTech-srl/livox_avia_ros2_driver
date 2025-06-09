@@ -30,6 +30,7 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 find_package(PCL REQUIRED)
 find_package(livox_sdk REQUIRED)
+find_package(livox_interfaces REQUIRED)
 
 # check apr
 find_package(PkgConfig)
@@ -98,6 +99,8 @@ rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "livox_ros::LivoxDriver"
   EXECUTABLE ${PROJECT_NAME}_node
 )
+
+ament_target_dependencies(${PROJECT_NAME} livox_interfaces)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
