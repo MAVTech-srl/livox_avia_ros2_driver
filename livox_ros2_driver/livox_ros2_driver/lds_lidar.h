@@ -90,7 +90,9 @@ class LdsLidar : public Lds {
   static void SetHighSensitivityCb(livox_status status, uint8_t handle,
                                    DeviceParameterResponse *response,
                                    void *clent_data);
-
+  static void SetScanPatternCb(livox_status status, uint8_t handle,
+                                  DeviceParameterResponse *response,
+                                  void *clent_data); 
   void ResetLdsLidar(void);
   int AddBroadcastCodeToWhitelist(const char *broadcast_code);
   bool IsBroadcastCodeExistInWhitelist(const char *broadcast_code);

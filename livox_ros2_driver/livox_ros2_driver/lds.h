@@ -89,7 +89,8 @@ typedef enum {
   kSourceUndef,
 } LidarDataSourceType;
 
-typedef enum { kCoordinateCartesian = 0, kCoordinateSpherical } CoordinateType;
+typedef enum { kCoordinateCartesian = 0, 
+  kCoordinateSpherical } CoordinateType;
 
 typedef enum {
   kConfigFan = 1 << 0,
@@ -98,6 +99,7 @@ typedef enum {
   kConfigImuRate = 1 << 3,
   kConfigGetExtrinsicParameter = 1 << 4,
   kConfigSetHighSensitivity = 1 << 5,
+  kConfigScanPattern = 1 << 6,              //added later
   kConfigUndef
 } LidarConfigCodeBit;
 
@@ -138,6 +140,7 @@ typedef struct {
   uint32_t imu_rate;
   uint32_t extrinsic_parameter_source;
   bool enable_high_sensitivity;
+  uint32_t scan_pattern;
 } UserRawConfig;
 
 typedef struct {
@@ -147,6 +150,7 @@ typedef struct {
   uint32_t imu_rate;
   uint32_t extrinsic_parameter_source;
   bool enable_high_sensitivity;
+  uint32_t scan_pattern;
   volatile uint32_t set_bits;
   volatile uint32_t get_bits;
 } UserConfig;

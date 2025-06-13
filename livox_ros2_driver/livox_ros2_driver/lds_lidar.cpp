@@ -34,6 +34,7 @@
 #include "rapidjson/filereadstream.h"
 #include "rapidjson/stringbuffer.h"
 
+
 using namespace std;
 
 namespace livox_ros {
@@ -212,15 +213,16 @@ void LdsLidar::OnDeviceBroadcast(const BroadcastDeviceInfo *info) {
       config.imu_rate = kImuFreq200Hz;
       config.extrinsic_parameter_source = kNoneExtrinsicParameter;
       config.enable_high_sensitivity = false;
+      config.scan_pattern = kNoneRepetitiveScanPattern;
     }
 
     p_lidar->config.enable_fan = config.enable_fan;
     p_lidar->config.return_mode = config.return_mode;
     p_lidar->config.coordinate = config.coordinate;
     p_lidar->config.imu_rate = config.imu_rate;
-    p_lidar->config.extrinsic_parameter_source =
-        config.extrinsic_parameter_source;
+    p_lidar->config.extrinsic_parameter_source = config.extrinsic_parameter_source;
     p_lidar->config.enable_high_sensitivity = config.enable_high_sensitivity;
+    p_lidar->config.scan_pattern = config.scan_pattern;
   } else {
     printf("Add lidar to connect is failed : %d %d \n", result, handle);
   }
@@ -257,6 +259,7 @@ void LdsLidar::OnDeviceChange(const DeviceInfo *info, DeviceEvent type) {
            p_lidar->info.status.status_code.error_code, p_lidar->info.state,
            p_lidar->info.feature);
     SetErrorMessageCallback(handle, LidarErrorStatusCb);
+
 
     /** Config lidar parameter */
     if (p_lidar->info.state == kLidarStateNormal) {
@@ -295,14 +298,20 @@ void LdsLidar::OnDeviceChange(const DeviceInfo *info, DeviceEvent type) {
         if (p_lidar->config.enable_high_sensitivity) {
           LidarEnableHighSensitivity(handle, SetHighSensitivityCb, g_lds_ldiar);
           printf("Enable high sensitivity\n");
-        } else {
+        } else {                                                           
           LidarDisableHighSensitivity(handle, SetHighSensitivityCb,
                                       g_lds_ldiar);
           printf("Disable high sensitivity\n");
         }
         p_lidar->config.set_bits |= kConfigSetHighSensitivity;
       }
-
+      
+      if (kDeviceTypeLidarAvia == info->type) { 
+        LidarSetScanPattern(handle, (LidarScanPattern)(p_lidar->config.scan_pattern),
+        SetScanPatternCb, g_lds_ldiar);       
+        printf("Changed Scan Pattern\n");
+        p_lidar->config.set_bits |= kConfigScanPattern;
+      } 
       p_lidar->connect_state = kConnectStateConfig;
     }
   }
@@ -495,9 +504,34 @@ void LdsLidar::SetHighSensitivityCb(livox_status status, uint8_t handle,
     } else {
       LidarDisableHighSensitivity(handle, SetHighSensitivityCb, g_lds_ldiar);
     }
-    printf("Set high sensitivity fail, try again!\n");
+    printf("Set high sensitivity fail, try again!\n");        
   }
 }
+
+void LdsLidar::SetScanPatternCb(livox_status status, uint8_t handle,
+                                    DeviceParameterResponse *response,
+                                    void *clent_data) {
+  LdsLidar *lds_lidar = static_cast<LdsLidar *>(clent_data);
+
+  if (handle >= kMaxLidarCount) {
+    return;
+  }
+  LidarDevice *p_lidar = &(lds_lidar->lidars_[handle]);
+
+  if (status == kStatusSuccess) {
+    p_lidar->config.set_bits &= ~((uint32_t)(kConfigScanPattern));
+    printf("Set scan pattern success!");
+
+    lock_guard<mutex> lock(lds_lidar->config_mutex_);
+    if (!p_lidar->config.set_bits) {
+      LidarStartSampling(handle, StartSampleCb, lds_lidar);
+      p_lidar->connect_state = kConnectStateSampling;
+    };
+  } else {
+      printf("Set scan pattern fail, try again!\n");
+    }
+}
+
 
 /** Callback function of starting sampling. */
 void LdsLidar::StartSampleCb(livox_status status, uint8_t handle,
@@ -701,11 +735,14 @@ int LdsLidar::ParseConfigFile(const char *pathname) {
             config.enable_high_sensitivity =
                 object["enable_high_sensitivity"].GetBool();
           }
+          if (object.HasMember("scan_pattern") && object["scan_pattern"].GetInt()) {
+            config.scan_pattern = object["scan_pattern"].GetInt();
+          }          
 
-          printf("broadcast code[%s] : %d %d %d %d %d %d\n",
+          printf("broadcast code[%s] : %d %d %d %d %d %d %d\n",
                  config.broadcast_code, config.enable_connect,
                  config.enable_fan, config.return_mode, config.coordinate,
-                 config.imu_rate, config.extrinsic_parameter_source);
+                 config.imu_rate, config.extrinsic_parameter_source, config.scan_pattern);
           if (config.enable_connect) {
             if (!AddBroadcastCodeToWhitelist(config.broadcast_code)) {
               if (AddRawUserConfig(config)) {
@@ -772,11 +809,13 @@ int LdsLidar::GetRawConfig(const char *broadcast_code, UserRawConfig &config) {
       config.imu_rate = ite_config.imu_rate;
       config.extrinsic_parameter_source = ite_config.extrinsic_parameter_source;
       config.enable_high_sensitivity = ite_config.enable_high_sensitivity;
+      config.scan_pattern = ite_config.scan_pattern;
       return 0;
     }
   }
 
   return -1;
+  // namespace livox_ros
 }
+}   
 
-}  // namespace livox_ros

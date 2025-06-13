@@ -13,6 +13,7 @@ output_type   = 0
 frame_id      = 'livox_frame'
 lvx_file_path = '/home/livox/livox_test.lvx'
 cmdline_bd_code = 'livox0000000001'
+# scan_pattern = 0    # 0-kNoneRepetitiveScanPattern, 1-kRepetitiveScanPattern
 
 cur_path = os.path.split(os.path.realpath(__file__))[0] + '/'
 cur_config_path = cur_path + '../config'
@@ -29,7 +30,8 @@ livox_ros2_params = [
     {"frame_id": frame_id},
     {"lvx_file_path": lvx_file_path},
     {"user_config_path": user_config_path},
-    {"cmdline_input_bd_code": cmdline_bd_code}
+    {"cmdline_input_bd_code": cmdline_bd_code},
+    # {"scan_pattern": scan_pattern}
 ]
 
 def generate_launch_description():
