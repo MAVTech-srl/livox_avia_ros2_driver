@@ -8,7 +8,7 @@
             "coordinate": 0,
             "imu_rate": 1,
             "extrinsic_parameter_source": 0,
-            "scan_pattern": 0
+            "scan_pattern": 1
         }
     ],
 	
